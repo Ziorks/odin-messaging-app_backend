@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique @db.VarChar(16)
+  password     String
+  profile      Profile?
+  sentMessages Message[]
+  threads      Thread[]
+}
+
+model Profile {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  lastActive DateTime @default(now())
+  about      String?
+  picture    String?
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int      @unique
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  body      String
+  createdAt DateTime @default(now())
+  sender    User     @relation(fields: [senderId], references: [id])
+  senderId  Int
+  thread    Thread   @relation(fields: [threadId], references: [id])
+  threadId  Int
+}
+
+model Thread {
+  id           Int       @id @default(autoincrement())
+  participants User[]
+  messages     Message[]
+}
+
+//If I decide to track message read status
+// model MessageRead {
+//   messageId Int
+//   userId    Int
+//   readAt    DateTime
+// }
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+}
