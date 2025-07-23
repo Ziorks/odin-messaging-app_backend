@@ -37,6 +37,7 @@ model Message {
   id        Int      @id @default(autoincrement())
   body      String
   createdAt DateTime @default(now())
+  isEdited  Boolean  @default(false)
   sender    User     @relation(fields: [senderId], references: [id])
   senderId  Int
   thread    Thread   @relation(fields: [threadId], references: [id])

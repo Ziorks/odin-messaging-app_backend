@@ -25,10 +25,47 @@ async function getUserByUsername(username) {
   return user;
 }
 
+async function getAllUsers({ search = "", page = 1, resultsPerPage = 10 }) {
+  const count = await prisma.user.count({
+    where: {
+      username: {
+        mode: "insensitive",
+        contains: search,
+      },
+    },
+  });
+  const users = await prisma.user.findMany({
+    skip: (page - 1) * resultsPerPage,
+    take: resultsPerPage,
+    where: {
+      username: {
+        mode: "insensitive",
+        contains: search,
+      },
+    },
+    include: {
+      profile: {
+        omit: { userId: true },
+      },
+    },
+    omit: { password: true },
+  });
+
+  return { count, users };
+}
+
 async function getProfileById(profileId) {
   const profile = await prisma.profile.findUnique({
     where: {
       id: profileId,
+    },
+    include: {
+      user: {
+        omit: { password: true },
+      },
+    },
+    omit: {
+      userId: true,
     },
   });
 
@@ -39,6 +76,14 @@ async function getProfileByUserId(userId) {
   const profile = await prisma.profile.findUnique({
     where: {
       userId,
+    },
+    include: {
+      user: {
+        omit: { password: true },
+      },
+    },
+    omit: {
+      userId: true,
     },
   });
 
@@ -60,9 +105,65 @@ async function getThreadById(threadId) {
     where: {
       id: threadId,
     },
+    include: {
+      messages: {
+        include: {
+          sender: {
+            omit: { password: true },
+          },
+        },
+        omit: {
+          threadId: true,
+          senderId: true,
+        },
+      },
+      participants: {
+        omit: { password: true },
+      },
+    },
   });
 
   return thread;
+}
+
+async function getAllThreads({ userId, search = "" }) {
+  const threads = await prisma.thread.findMany({
+    where: {
+      participants: {
+        some: {
+          id: userId,
+          username: { contains: search, mode: "insensitive" },
+        },
+      },
+      messages: {
+        some: { id: { gt: 0 } },
+      },
+    },
+    include: {
+      participants: {
+        where: { id: { not: userId } },
+        omit: { password: true },
+        include: {
+          profile: {
+            select: {
+              lastActive: true,
+              picture: true,
+            },
+          },
+        },
+      },
+      messages: {
+        take: 1,
+        orderBy: { createdAt: "desc" },
+        select: {
+          body: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  return threads;
 }
 
 async function createUser({ username, hashedPassword }) {
@@ -122,15 +223,41 @@ async function updateProfile(profileId, { about, lastActive, picture }) {
   return profile;
 }
 
+async function updateMessage(messageId, { body }) {
+  const message = await prisma.message.update({
+    where: {
+      id: messageId,
+    },
+    data: {
+      body,
+      isEdited: true,
+    },
+  });
+
+  return message;
+}
+
+async function deleteMessage(messageId) {
+  await prisma.message.delete({
+    where: {
+      id: messageId,
+    },
+  });
+}
+
 module.exports = {
   getUserById,
   getUserByUsername,
+  getAllUsers,
   getProfileById,
   getProfileByUserId,
   getMessageById,
   getThreadById,
+  getAllThreads,
   createUser,
   createMessage,
   createThread,
   updateProfile,
+  updateMessage,
+  deleteMessage,
 };

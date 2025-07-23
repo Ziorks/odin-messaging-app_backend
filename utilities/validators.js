@@ -38,4 +38,13 @@ const validateRegister = [
     .withMessage("Password confirmation doesn't match"),
 ];
 
-module.exports = { validateRegister };
+const validateMessage = [
+  body("body")
+    .exists()
+    .withMessage("'body'" + existsMessage)
+    .trim()
+    .isString()
+    .withMessage("'body' must be a string"),
+];
+
+module.exports = { validateRegister, validateMessage };

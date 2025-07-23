@@ -24,6 +24,7 @@ CREATE TABLE "Message" (
     "id" SERIAL NOT NULL,
     "body" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "isEdited" BOOLEAN NOT NULL DEFAULT false,
     "senderId" INTEGER NOT NULL,
     "threadId" INTEGER NOT NULL,
 

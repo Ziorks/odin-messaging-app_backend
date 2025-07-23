@@ -23,8 +23,26 @@ const isLoggedIn = async (req, res, next) => {
   return next();
 };
 
+const localizeMessage = async (req, res, next) => {
+  const messageId = +req.params.messageId;
+  const message = await db.getMessageById(messageId);
+  if (!message) {
+    return res.status(404).json({ message: "message not found" });
+  }
+  if (message.senderId !== req.user.id) {
+    return res
+      .status(403)
+      .json({ message: "you are not allowed to access this message" });
+  }
+
+  res.locals.messageId = messageId;
+  res.locals.message = message;
+  return next();
+};
+
 module.exports = {
   notFoundHandler,
   errorHandler,
   isLoggedIn,
+  localizeMessage,
 };
