@@ -126,13 +126,47 @@ async function getThreadById(threadId) {
   return thread;
 }
 
-async function getAllThreads({ userId, search = "" }) {
-  const threads = await prisma.thread.findMany({
+async function getAllThreads({
+  userId,
+  search = "",
+  page = 1,
+  resultsPerPage = 10,
+}) {
+  const count = await prisma.thread.count({
     where: {
-      participants: {
-        some: {
-          id: userId,
-          username: { contains: search, mode: "insensitive" },
+      AND: {
+        participants: {
+          some: {
+            id: userId,
+          },
+        },
+        participants: {
+          some: {
+            username: { contains: search, mode: "insensitive" },
+            id: { not: userId },
+          },
+        },
+      },
+      messages: {
+        some: { id: { gt: 0 } },
+      },
+    },
+  });
+  const threads = await prisma.thread.findMany({
+    skip: (page - 1) * resultsPerPage,
+    take: resultsPerPage,
+    where: {
+      AND: {
+        participants: {
+          some: {
+            id: userId,
+          },
+        },
+        participants: {
+          some: {
+            username: { contains: search, mode: "insensitive" },
+            id: { not: userId },
+          },
         },
       },
       messages: {
@@ -163,7 +197,7 @@ async function getAllThreads({ userId, search = "" }) {
     },
   });
 
-  return threads;
+  return { count, threads };
 }
 
 async function createUser({ username, hashedPassword }) {

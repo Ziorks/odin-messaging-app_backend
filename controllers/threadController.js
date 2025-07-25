@@ -1,11 +1,26 @@
 const db = require("../db/queries");
 
 const threadSearchGet = async (req, res) => {
-  //TODO: validate body?
-  const { search } = req.body;
-  const threads = await db.getAllThreads({ userId: req.user.id, search });
+  let { search, page, resultsPerPage } = req.query;
+  if (page) {
+    page = +page;
+  }
+  if (resultsPerPage) {
+    resultsPerPage = +resultsPerPage;
+  }
+  const results = await db.getAllThreads({
+    userId: req.user.id,
+    search,
+    page,
+    resultsPerPage,
+  });
 
-  return res.json({ threads });
+  results.threads = results.threads.sort(
+    (a, b) =>
+      new Date(b.messages[0].createdAt) - new Date(a.messages[0].createdAt)
+  );
+
+  return res.json({ results });
 };
 
 const threadPost = async (req, res) => {
