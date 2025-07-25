@@ -7,8 +7,7 @@ const currentUserGet = async (req, res) => {
 };
 
 const userSearchGet = async (req, res) => {
-  //TODO: validate body
-  let { search, page, resultsPerPage } = req.body;
+  let { search, page, resultsPerPage } = req.query;
   if (page) {
     page = +page;
   }
