@@ -107,18 +107,18 @@ async function getThreadById(threadId) {
     },
     include: {
       messages: {
-        include: {
-          sender: {
-            omit: { password: true },
-          },
-        },
         omit: {
           threadId: true,
-          senderId: true,
         },
+        orderBy: { createdAt: "asc" },
       },
       participants: {
         omit: { password: true },
+        include: {
+          profile: {
+            omit: { userId: true },
+          },
+        },
       },
     },
   });
