@@ -25,6 +25,24 @@ async function getUserByUsername(username) {
   return user;
 }
 
+async function getUserWithProfileById(userId) {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    include: {
+      profile: {
+        omit: { userId: true },
+      },
+    },
+    omit: {
+      password: true,
+    },
+  });
+
+  return user;
+}
+
 async function getAllUsers({ search = "", page = 1, resultsPerPage = 10 }) {
   const count = await prisma.user.count({
     where: {
@@ -282,6 +300,7 @@ async function deleteMessage(messageId) {
 module.exports = {
   getUserById,
   getUserByUsername,
+  getUserWithProfileById,
   getAllUsers,
   getProfileById,
   getProfileByUserId,

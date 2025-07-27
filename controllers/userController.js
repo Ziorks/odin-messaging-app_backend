@@ -1,9 +1,9 @@
 const db = require("../db/queries");
 
 const currentUserGet = async (req, res) => {
-  const profile = await db.getProfileByUserId(req.user.id);
+  const user = await db.getUserWithProfileById(req.user.id);
 
-  return res.json({ profile });
+  return res.json({ user });
 };
 
 const userSearchGet = async (req, res) => {
@@ -25,9 +25,9 @@ const userSearchGet = async (req, res) => {
 
 const userGet = async (req, res) => {
   const { userId } = req.params;
-  const profile = await db.getProfileByUserId(+userId);
+  const user = await db.getUserWithProfileById(+userId);
 
-  return res.json({ profile });
+  return res.json({ user });
 };
 
 module.exports = { currentUserGet, userSearchGet, userGet };
