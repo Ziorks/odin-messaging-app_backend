@@ -144,6 +144,16 @@ async function getThreadById(threadId) {
   return thread;
 }
 
+async function getThreadByParticipantIds(participantIds) {
+  const thread = await prisma.thread.findFirst({
+    where: {
+      participants: { every: { id: { in: participantIds } } },
+    },
+  });
+
+  return thread;
+}
+
 async function getAllThreads({
   userId,
   search = "",
@@ -248,11 +258,12 @@ async function createMessage({ body, senderId, threadId }) {
   return message;
 }
 
-async function createThread({ userId1, userId2 }) {
+async function createThread(participantIds) {
+  const idsForConnect = participantIds.map((id) => ({ id }));
   const thread = await prisma.thread.create({
     data: {
       participants: {
-        connect: [{ id: userId1 }, { id: userId2 }],
+        connect: idsForConnect,
       },
     },
   });
@@ -306,6 +317,7 @@ module.exports = {
   getProfileByUserId,
   getMessageById,
   getThreadById,
+  getThreadByParticipantIds,
   getAllThreads,
   createUser,
   createMessage,

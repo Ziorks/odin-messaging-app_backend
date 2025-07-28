@@ -1,6 +1,7 @@
 const db = require("../db/queries");
 
 const threadSearchGet = async (req, res) => {
+  //TODO: include thread where only participant is self
   let { search, page, resultsPerPage } = req.query;
   if (page) {
     page = +page;
@@ -32,9 +33,26 @@ const threadPost = async (req, res) => {
       .status(400)
       .json({ message: "the 'userId' you provided is invalid" });
   }
-  await db.createThread({ userId1: req.user.id, userId2: userId });
+  await db.createThread([req.user.id, userId]);
 
   return res.json({ message: "thread created" });
+};
+
+const threadFindOrCreatePost = async (req, res) => {
+  //TODO: validate body
+  // exists
+  // are real ids
+  // doesn't include req.user.id
+  const { recipientIds } = req.body;
+  let thread = await db.getThreadByParticipantIds([
+    req.user.id,
+    ...recipientIds,
+  ]);
+  if (!thread) {
+    thread = await db.createThread([req.user.id, ...recipientIds]);
+  }
+
+  return res.json({ thread });
 };
 
 const threadGet = async (req, res) => {
@@ -55,4 +73,9 @@ const threadGet = async (req, res) => {
   return res.json({ thread });
 };
 
-module.exports = { threadSearchGet, threadPost, threadGet };
+module.exports = {
+  threadSearchGet,
+  threadPost,
+  threadFindOrCreatePost,
+  threadGet,
+};
