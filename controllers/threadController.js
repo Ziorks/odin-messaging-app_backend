@@ -1,7 +1,6 @@
 const db = require("../db/queries");
 
 const threadSearchGet = async (req, res) => {
-  //TODO: include thread where only participant is self
   let { search, page, resultsPerPage } = req.query;
   if (page) {
     page = +page;
@@ -16,10 +15,22 @@ const threadSearchGet = async (req, res) => {
     resultsPerPage,
   });
 
-  results.threads = results.threads.sort(
-    (a, b) =>
+  const currentUser = await db.getUserWithProfileById(req.user.id);
+  delete currentUser.profile.id;
+  delete currentUser.profile.about;
+  delete currentUser.profile.createdAt;
+
+  results.threads = results.threads.sort((a, b) => {
+    if (a.participants.length === 0) {
+      a.participants.push(currentUser);
+    }
+    if (b.participants.length === 0) {
+      b.participants.push(currentUser);
+    }
+    return (
       new Date(b.messages[0].createdAt) - new Date(a.messages[0].createdAt)
-  );
+    );
+  });
 
   return res.json({ results });
 };
@@ -42,14 +53,12 @@ const threadFindOrCreatePost = async (req, res) => {
   //TODO: validate body
   // exists
   // are real ids
-  // doesn't include req.user.id
   const { recipientIds } = req.body;
-  let thread = await db.getThreadByParticipantIds([
-    req.user.id,
-    ...recipientIds,
-  ]);
+  const participantIds = [...new Set([req.user.id, ...recipientIds])];
+
+  let thread = await db.getThreadByParticipantIds(participantIds);
   if (!thread) {
-    thread = await db.createThread([req.user.id, ...recipientIds]);
+    thread = await db.createThread(participantIds);
   }
 
   return res.json({ thread });

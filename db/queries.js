@@ -145,13 +145,19 @@ async function getThreadById(threadId) {
 }
 
 async function getThreadByParticipantIds(participantIds) {
-  const thread = await prisma.thread.findFirst({
+  if (participantIds.length === 0) return null;
+
+  const threads = await prisma.thread.findMany({
     where: {
       participants: { every: { id: { in: participantIds } } },
     },
+    include: { participants: true },
   });
 
-  return thread;
+  const filteredThreads = threads.filter(
+    (thread) => thread.participants.length === participantIds.length
+  );
+  return filteredThreads[0] || null;
 }
 
 async function getAllThreads({
@@ -162,19 +168,24 @@ async function getAllThreads({
 }) {
   const count = await prisma.thread.count({
     where: {
-      AND: {
-        participants: {
-          some: {
-            id: userId,
+      OR: [
+        { participants: { every: { id: userId } } },
+        {
+          AND: {
+            participants: {
+              some: {
+                id: userId,
+              },
+            },
+            participants: {
+              some: {
+                username: { contains: search, mode: "insensitive" },
+                id: { not: userId },
+              },
+            },
           },
         },
-        participants: {
-          some: {
-            username: { contains: search, mode: "insensitive" },
-            id: { not: userId },
-          },
-        },
-      },
+      ],
       messages: {
         some: { id: { gt: 0 } },
       },
@@ -184,19 +195,24 @@ async function getAllThreads({
     skip: (page - 1) * resultsPerPage,
     take: resultsPerPage,
     where: {
-      AND: {
-        participants: {
-          some: {
-            id: userId,
+      OR: [
+        { participants: { every: { id: userId } } },
+        {
+          AND: {
+            participants: {
+              some: {
+                id: userId,
+              },
+            },
+            participants: {
+              some: {
+                username: { contains: search, mode: "insensitive" },
+                id: { not: userId },
+              },
+            },
           },
         },
-        participants: {
-          some: {
-            username: { contains: search, mode: "insensitive" },
-            id: { not: userId },
-          },
-        },
-      },
+      ],
       messages: {
         some: { id: { gt: 0 } },
       },

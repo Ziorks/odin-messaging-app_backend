@@ -29,7 +29,7 @@ model Profile {
   lastActive DateTime @default(now())
   about      String?
   picture    String?
-  user       User     @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int      @unique
 }
 
@@ -38,9 +38,9 @@ model Message {
   body      String
   createdAt DateTime @default(now())
   isEdited  Boolean  @default(false)
-  sender    User     @relation(fields: [senderId], references: [id])
-  senderId  Int
-  thread    Thread   @relation(fields: [threadId], references: [id])
+  sender    User?    @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  senderId  Int?
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
   threadId  Int
 }
 
