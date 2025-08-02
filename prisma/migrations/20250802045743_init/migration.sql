@@ -13,7 +13,8 @@ CREATE TABLE "Profile" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastActive" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "about" TEXT,
-    "picture" TEXT,
+    "pictureURL" TEXT NOT NULL DEFAULT 'https://res.cloudinary.com/dwf29bnr3/image/upload/v1754109878/messaging_app_profile_pics/icsll72wpxwcku6gb1by.jpg',
+    "picturePublicId" TEXT NOT NULL DEFAULT 'messaging_app_profile_pics/icsll72wpxwcku6gb1by',
     "userId" INTEGER NOT NULL,
 
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")

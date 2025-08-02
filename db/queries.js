@@ -225,7 +225,7 @@ async function getAllThreads({
           profile: {
             select: {
               lastActive: true,
-              picture: true,
+              pictureURL: true,
             },
           },
         },
@@ -287,7 +287,32 @@ async function createThread(participantIds) {
   return thread;
 }
 
-async function updateProfile(profileId, { about, lastActive, picture }) {
+async function updateUserAndProfile(
+  userId,
+  { username, password, about, pictureURL, picturePublicId }
+) {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      username,
+      password,
+      profile: {
+        update: {
+          about,
+          pictureURL,
+          picturePublicId,
+        },
+      },
+    },
+  });
+
+  return user;
+}
+
+async function updateProfile(
+  profileId,
+  { about, lastActive, pictureURL, picturePublicId }
+) {
   const profile = await prisma.profile.update({
     where: {
       id: profileId,
@@ -295,7 +320,8 @@ async function updateProfile(profileId, { about, lastActive, picture }) {
     data: {
       about,
       lastActive,
-      picture,
+      pictureURL,
+      picturePublicId,
     },
   });
 
@@ -338,6 +364,7 @@ module.exports = {
   createUser,
   createMessage,
   createThread,
+  updateUserAndProfile,
   updateProfile,
   updateMessage,
   deleteMessage,

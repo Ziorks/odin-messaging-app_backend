@@ -24,13 +24,14 @@ model User {
 }
 
 model Profile {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now())
-  lastActive DateTime @default(now())
-  about      String?
-  picture    String?
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     Int      @unique
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  lastActive      DateTime @default(now())
+  about           String?
+  pictureURL      String   @default("https://res.cloudinary.com/dwf29bnr3/image/upload/v1754109878/messaging_app_profile_pics/icsll72wpxwcku6gb1by.jpg")
+  picturePublicId String   @default("messaging_app_profile_pics/icsll72wpxwcku6gb1by")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int      @unique
 }
 
 model Message {
