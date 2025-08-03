@@ -28,7 +28,7 @@ const loginPost = (req, res, next) => {
 
 const registerPost = [
   validateRegister,
-  (req, res, next) => {
+  async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res
@@ -37,6 +37,15 @@ const registerPost = [
     }
 
     const { username, password } = req.body;
+
+    const user = await db.getUserByUsername(username);
+    if (user) {
+      return res.status(400).json({
+        message: "validation failed",
+        errors: [{ msg: "Username is taken" }],
+      });
+    }
+
     bcrypt.hash(password, 10, async (err, hashedPassword) => {
       if (err) {
         return next(err);

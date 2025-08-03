@@ -40,6 +40,15 @@ const currentUserProfileUpdate = [
         .json({ message: "validation failed", errors: errors.array() });
     }
 
+    const { username } = req.body;
+    const newUsernameUser = await db.getUserByUsername(username);
+    if (newUsernameUser && newUsernameUser.id !== req.user.id) {
+      return res.status(400).json({
+        message: "validation failed",
+        errors: [{ msg: "Username is taken" }],
+      });
+    }
+
     const user = await db.getUserWithProfileById(req.user.id);
     let picturePublicId = "messaging_app_profile_pics/icsll72wpxwcku6gb1by";
 
@@ -57,7 +66,7 @@ const currentUserProfileUpdate = [
     }
 
     try {
-      const { picture: pictureURL, about, username } = req.body;
+      const { picture: pictureURL, about } = req.body;
       await db.updateUserAndProfile(req.user.id, {
         pictureURL,
         picturePublicId,
@@ -86,15 +95,26 @@ const currentUserProfileUpdate = [
 
 const currentUserPasswordUpdate = [
   validatePasswordUpdate,
-  (req, res, next) => {
+  async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res
-        .status(400)
-        .json({ message: "validation failed", errors: errors.array() });
+      return res.status(400).json({
+        message: "validation failed",
+        errors: errors.array(),
+      });
     }
 
-    const { newPassword } = req.body;
+    const { newPassword, oldPassword } = req.body;
+
+    const user = await db.getUserById(req.user.id);
+    const match = await bcrypt.compare(oldPassword, user.password);
+    if (!match) {
+      return res.status(400).json({
+        message: "validation failed",
+        errors: [{ msg: "'oldPassword' is incorrect" }],
+      });
+    }
+
     bcrypt.hash(newPassword, 10, async (err, hashedPassword) => {
       if (err) {
         return next(err);

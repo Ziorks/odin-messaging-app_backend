@@ -1,3 +1,5 @@
+const { validationResult } = require("express-validator");
+const { validateThreadFindOrCreate } = require("../utilities/validators");
 const db = require("../db/queries");
 
 const threadSearchGet = async (req, res) => {
@@ -15,54 +17,65 @@ const threadSearchGet = async (req, res) => {
     resultsPerPage,
   });
 
-  const currentUser = await db.getUserWithProfileById(req.user.id);
-  delete currentUser.profile.id;
-  delete currentUser.profile.about;
-  delete currentUser.profile.createdAt;
+  for (thread of results.threads) {
+    if (thread.participants.length === 0) {
+      const currentUser = await db.getUserWithProfileById(req.user.id);
+      delete currentUser.profile.id;
+      delete currentUser.profile.about;
+      delete currentUser.profile.createdAt;
+      thread.participants.push(currentUser);
+      break;
+    }
+  }
 
-  results.threads = results.threads.sort((a, b) => {
-    if (a.participants.length === 0) {
-      a.participants.push(currentUser);
-    }
-    if (b.participants.length === 0) {
-      b.participants.push(currentUser);
-    }
-    return (
+  results.threads = results.threads.sort(
+    (a, b) =>
       new Date(b.messages[0].createdAt) - new Date(a.messages[0].createdAt)
-    );
-  });
+  );
 
   return res.json({ results });
 };
 
-const threadPost = async (req, res) => {
-  //TODO: not sure if this is good since you can create multiple threads with same participants but I'm rolling with it for now
-  const { userId } = req.body;
-  const user = await db.getUserById(userId);
-  if (!user) {
-    return res
-      .status(400)
-      .json({ message: "the 'userId' you provided is invalid" });
-  }
-  await db.createThread([req.user.id, userId]);
+const threadFindOrCreatePost = [
+  validateThreadFindOrCreate,
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res
+        .status(400)
+        .json({ message: "validation failed", errors: errors.array() });
+    }
+    const { recipientIds } = req.body;
 
-  return res.json({ message: "thread created" });
-};
+    //make sure all ids are valid
+    const results = await Promise.all(
+      recipientIds.map(async (userId) => {
+        const user = await db.getUserById(userId);
+        return { userId, valid: !!user };
+      })
+    );
+    const invalidUserIds = results.filter((r) => !r.valid).map((r) => r.userId);
+    if (invalidUserIds.length > 0) {
+      return res.status(400).json({
+        message: "validation failed",
+        errors: [
+          {
+            msg: `The userIds '${invalidUserIds.join(", ")}' are invalid `,
+          },
+        ],
+      });
+    }
 
-const threadFindOrCreatePost = async (req, res) => {
-  //TODO: validate body
-  // exists
-  // are real ids
-  const { recipientIds } = req.body;
-  const participantIds = [...new Set([req.user.id, ...recipientIds])];
+    const participantIds = [...new Set([req.user.id, ...recipientIds])];
 
-  let thread = await db.getThreadByParticipantIds(participantIds);
-  if (!thread) {
-    thread = await db.createThread(participantIds);
-  }
+    let thread = await db.getThreadByParticipantIds(participantIds);
+    if (!thread) {
+      thread = await db.createThread(participantIds);
+    }
 
-  return res.json({ thread });
-};
+    return res.json({ thread });
+  },
+];
 
 const threadGet = async (req, res) => {
   const { threadId } = req.params;
@@ -84,7 +97,6 @@ const threadGet = async (req, res) => {
 
 module.exports = {
   threadSearchGet,
-  threadPost,
   threadFindOrCreatePost,
   threadGet,
 };
