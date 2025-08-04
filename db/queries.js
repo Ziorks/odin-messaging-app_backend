@@ -166,17 +166,13 @@ async function getAllThreads({
   page = 1,
   resultsPerPage = 10,
 }) {
-  const count = await prisma.thread.count({
-    where: {
-      OR: [
-        { participants: { every: { id: userId } } },
-        {
-          AND: {
-            participants: {
-              some: {
-                id: userId,
-              },
-            },
+  const where = {
+    OR: [
+      { participants: { every: { id: userId } } },
+      {
+        AND: [
+          { participants: { some: { id: userId } } },
+          {
             participants: {
               some: {
                 username: { contains: search, mode: "insensitive" },
@@ -184,39 +180,22 @@ async function getAllThreads({
               },
             },
           },
-        },
-      ],
-      messages: {
-        some: { id: { gt: 0 } },
+        ],
       },
+    ],
+    messages: {
+      some: { id: { gt: 0 } },
     },
+  };
+
+  const count = await prisma.thread.count({
+    where,
   });
+
   const threads = await prisma.thread.findMany({
     skip: (page - 1) * resultsPerPage,
     take: resultsPerPage,
-    where: {
-      OR: [
-        { participants: { every: { id: userId } } },
-        {
-          AND: {
-            participants: {
-              some: {
-                id: userId,
-              },
-            },
-            participants: {
-              some: {
-                username: { contains: search, mode: "insensitive" },
-                id: { not: userId },
-              },
-            },
-          },
-        },
-      ],
-      messages: {
-        some: { id: { gt: 0 } },
-      },
-    },
+    where,
     include: {
       participants: {
         where: { id: { not: userId } },
