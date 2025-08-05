@@ -63,8 +63,14 @@ const messageUpdate = [
       });
     }
 
-    const { body } = req.body;
     const { message } = res.locals;
+    if (message.senderId !== req.user.id) {
+      return res.status(403).json({
+        message: "you are not authorized to edit a message you didn't create",
+      });
+    }
+
+    const { body } = req.body;
     await db.updateMessage(message.id, { body });
 
     return res.json({ message: "message updated" });

@@ -36,7 +36,9 @@ const validateMessageUpdate = [
     .withMessage("'body'" + existsMessage)
     .trim()
     .isString()
-    .withMessage("'body' must be a string"),
+    .withMessage("'body' must be a string")
+    .notEmpty()
+    .withMessage("'body' can't be an empty string"),
 ];
 
 const validateMessageCreate = [
