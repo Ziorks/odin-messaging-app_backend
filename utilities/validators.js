@@ -65,29 +65,20 @@ const validateProfileUpdate = [
       return next();
     });
   },
-  body("picture")
-    .custom((_, { req }) => {
-      if (req.fileValidationError) {
-        throw new Error(req.fileValidationError.message);
-      }
+  body("picture").custom((_, { req }) => {
+    if (req.fileValidationError) {
+      throw new Error(req.fileValidationError.message);
+    }
 
-      const picture = req.file;
-      if (!picture) return true;
+    const picture = req.file;
+    if (!picture) return true;
 
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ];
-      if (!allowedTypes.includes(picture.mimetype)) {
-        throw new Error("Only image files are allowed");
-      }
-      return true;
-    })
-    .default(
-      "https://res.cloudinary.com/dwf29bnr3/image/upload/v1754109878/messaging_app_profile_pics/icsll72wpxwcku6gb1by.jpg"
-    ),
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(picture.mimetype)) {
+      throw new Error("Only image files are allowed");
+    }
+    return true;
+  }),
   body("about").trim().isString().withMessage("'about' must be a string"),
   body("username")
     .exists()
