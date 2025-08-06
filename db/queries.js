@@ -168,7 +168,18 @@ async function getAllThreads({
 }) {
   const where = {
     OR: [
-      { participants: { every: { id: userId } } },
+      {
+        AND: [
+          { participants: { every: { id: userId } } },
+          {
+            participants: {
+              some: {
+                username: { contains: search, mode: "insensitive" },
+              },
+            },
+          },
+        ],
+      },
       {
         AND: [
           { participants: { some: { id: userId } } },
