@@ -128,7 +128,7 @@ async function getThreadById(threadId) {
         omit: {
           threadId: true,
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
       },
       participants: {
         omit: { password: true },
