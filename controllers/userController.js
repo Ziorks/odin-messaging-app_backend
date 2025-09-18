@@ -50,7 +50,6 @@ const currentUserProfileUpdate = [
     }
 
     const user = await db.getUserWithProfileById(req.user.id);
-    let picturePublicId = "messaging_app_profile_pics/icsll72wpxwcku6gb1by";
 
     //if picture was sent => upload to cloudinary
     if (req.file) {
@@ -61,12 +60,12 @@ const currentUserProfileUpdate = [
         resource_type: "auto",
         folder: "messaging_app_profile_pics",
       });
-      req.body.picture = result.secure_url;
-      picturePublicId = result.public_id;
+      req.body.pictureURL = result.secure_url;
+      req.body.picturePublicId = result.public_id;
     }
 
+    const { pictureURL, picturePublicId, about } = req.body;
     try {
-      const { picture: pictureURL, about } = req.body;
       await db.updateUserAndProfile(req.user.id, {
         pictureURL,
         picturePublicId,
@@ -75,17 +74,22 @@ const currentUserProfileUpdate = [
       });
     } catch (err) {
       //delete new pic if something goes wrong
-      try {
-        await cloudinary.uploader.destroy(picturePublicId);
-      } catch (err) {
-        return next(err);
+      if (picturePublicId) {
+        try {
+          await cloudinary.uploader.destroy(picturePublicId);
+        } catch (err) {
+          return next(err);
+        }
       }
       return next(err);
     }
 
     //delete old picture from cloudinary
     const oldPicPublicId = user.profile.picturePublicId;
-    if (oldPicPublicId !== "messaging_app_profile_pics/icsll72wpxwcku6gb1by") {
+    if (
+      req.file &&
+      oldPicPublicId !== "messaging_app_profile_pics/icsll72wpxwcku6gb1by"
+    ) {
       await cloudinary.uploader.destroy(oldPicPublicId);
     }
 
