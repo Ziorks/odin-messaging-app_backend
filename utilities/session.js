@@ -13,6 +13,8 @@ module.exports = session({
   saveUninitialized: true,
   resave: false,
   cookie: {
+    secure: true,
+    sameSite: "none",
     maxAge: 1000 * 60 * 60 * 24 * 7, //one week
   },
 });
